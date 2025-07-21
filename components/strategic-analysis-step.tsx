@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import * as pdfjs from "pdfjs-dist"
 
 // Importações dos seus componentes de UI
 import { Button } from "@/components/ui/button"
@@ -14,6 +13,7 @@ import { CollapsibleOutput } from "@/components/collapsible-output"
 
 export function StrategicAnalysisStep() {
   // --- ESTADOS ---
+  const [pdfjs, setPdfjs] = useState<any>(null)
   const [file, setFile] = useState<File | null>(null)
   const [qspText, setQspText] = useState("") // Armazena o texto extraído do PDF
   const [kickoffText, setKickoffText] = useState("") // Armazena o texto da reunião
@@ -23,18 +23,18 @@ export function StrategicAnalysisStep() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
-  // --- CONFIGURAÇÃO DO PDF.JS (APENAS NO CLIENTE) ---
   useEffect(() => {
-    // Esta é a forma correta de configurar o worker no Next.js
-    // Ele só roda no navegador, evitando o erro de SSR.
-    pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+    import("pdfjs-dist").then((mod) => {
+      mod.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.version}/build/pdf.worker.min.mjs`
+      setPdfjs(mod)
+    })
   }, [])
 
   // --- FUNÇÕES ---
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0]
-    if (!selectedFile) return
+    if (!selectedFile || !pdfjs) return
 
     if (selectedFile.type !== "application/pdf") {
       toast({
